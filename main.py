@@ -1,7 +1,7 @@
 
 import os
-import logging
-from extension import load_env_files
+from logger import logger
+from dotenv import load_dotenv
 from logging.handlers import RotatingFileHandler
 from flask_migrate import Migrate
 from flask import Flask, jsonify
@@ -15,7 +15,7 @@ from extension import db, mail, bcrypt, jwt
 
 
 
-
+load_dotenv()
 
 
 def create_app():
@@ -39,22 +39,9 @@ def create_app():
     app.config['SECRET_KEY']= os.getenv('SECRET_KEY')
     app.config['JWT_SECRET_KEY']= os.getenv('JWT_SECRET_KEY')
    
-   # logging configurations
-    if not os.path.exists('logs'):
-        os.mkdir('logs')
-        
-    file_handler= RotatingFileHandler(
-    'logs/app.log',
-    maxBytes= 10240,
-    backupCount= 10
-    )
-    file_handler.setLevel(logging.INFO)
-    formatter= logging.Formatter('%(asctime)s - %(levelname)s - %(name)s - %(message)s')
+   
     
-    file_handler.setFormatter(formatter)
-    app.logger.addHandler(file_handler)
-    app.logger.setLevel(logging.INFO)
-    app.logger.info('Application started')
+    logger.info('Application started')
     
     db.init_app(app)
     jwt.init_app(app)
@@ -71,7 +58,6 @@ def create_app():
     @app.errorhandler(Exception)
     def handle_exception(error):
         app.logger.error(f"Unhandled Exception {error}")
-        
         return jsonify({"msg":"An unexpected error occured"}), 500
     
     @jwt.user_lookup_loader
@@ -99,15 +85,18 @@ def create_app():
     #jwt error handlers 
     @jwt.expired_token_loader
     def expired_token_callback(jwt_header, jwt_date):
-        return jsonify({"msg": "token_expired"}), 401
+        logger.error('Error occurred', exc_info=True)
+        return jsonify({"msg": "Somthing went wrong"}), 400
     
     @jwt.invalid_token_loader
     def invalid_token_callback(error):
-        return jsonify({"msg": "invalid token"}), 401
+        logger.error('Error occurred', exc_info=True)
+        return jsonify({"msg": "Somthing went wrong"}), 400
     
     @jwt.unauthorized_loader
     def missing_token_callback(error):
-        return jsonify({"msg": "Unauthorization_header"}), 401
+        logger.error('Error occurred', exc_info=True)
+        return jsonify({"msg": "Something went wrong"}), 401
     
     return app
 

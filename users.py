@@ -4,6 +4,7 @@ import hmac
 import requests
 from uuid import uuid4
 from extension import db
+from logger import logger
 from flask import request, jsonify, Blueprint
 from flask_jwt_extended import current_user, jwt_required, get_jwt_identity
 from models import (Profiles, Categories, Products, Orders, OrderItems, Carts, CartItems, Reviews)
@@ -57,9 +58,9 @@ def create_profile():
             
         return jsonify({"msg":"Profile created successfully"}), 201
     except Exception:
+        logger.error("Error occured", exc_info=True)
         db.session.rollback()
-        return jsonify({"msg":"Something went wrong profile creation"}), 400
-
+        return jsonify({"msg":"Something went wrong during profile creation"}), 400
 
 
 @user_bp.put('/profiles/update')
@@ -102,6 +103,7 @@ def update_my_profile():
         db.session.commit()
         return jsonify({"msg":"Profile updated"}), 200
     except Exception:
+        logger.error("Error occured", exc_info=True)
         db.session.rollback()
         return jsonify({"msg":"Something went wrong while updating profile"}), 400
 
@@ -329,8 +331,6 @@ def remove_from_cart(item_id):
     return jsonify({"msg":"Item removed from cart"}), 200
     
 
-
-
 @user_bp.post('/orders/create')
 @jwt_required()
 def create_order():
@@ -398,8 +398,8 @@ def create_order():
             product.stock -= quantity  
         return jsonify({"msg":"Order added"}), 201
     except Exception:
-        db.session.rollback()
-        return jsonify({"msg":"Something went wrong during signup"}), 400
+        logger.error("Error occured", exc_info=True)
+        return jsonify({"msg":"Something went wrong"}), 400
    
 
 @user_bp.post('/orders/revoke/<int:order_id>') 

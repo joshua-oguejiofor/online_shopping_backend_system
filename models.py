@@ -1,7 +1,7 @@
 # ''' This is database table setting and relationship defining '''
 import re
 from extension import db
-from datetime import datetime
+from datetime import datetime, timedelta
 from flask_login import UserMixin
 
 
@@ -15,6 +15,7 @@ class Users(db.Model, UserMixin):
     email_verified= db.Column(db.Boolean, nullable=False, default= False)
     status= db.Column(db.String(50), nullable=False, default= 'active')
     role= db.Column(db.String(50),nullable= False,  default= 'user')
+    password_otp= db.Column(db.Integer, timedelta(minutes= 10))
     created_at= db.Column(db.DateTime, default= datetime.utcnow)
     
     # relationships
@@ -106,7 +107,7 @@ class CartItems(db.Model):
     product_id= db.Column(db.Integer, db.ForeignKey('products.id'))
     product_name= db.Column(db.String(60), nullable= False)
     price= db.Column(db.Float, nullable= False)
-    quantity= db.Column(db.Integer, nullable= False, default= 1)
+    quantity= db.Column(db.Integer, default= 1)
     
     # relationships
     carts= db.relationship('Carts', back_populates='cart_items')

@@ -1,4 +1,5 @@
 from extension import db
+from logger import logger
 from flask import jsonify
 from functools import wraps
 from datetime import datetime
@@ -8,6 +9,9 @@ from flask_jwt_extended import get_jwt, verify_jwt_in_request
 
 
 admin_bp= Blueprint('admin',__name__)
+
+logger.info('Admin application accessed')
+
 
 def admin_required(fn):
         @wraps(fn)
@@ -41,10 +45,10 @@ def admin_or_vendor_required(fn):
     return wrapper
    
    
-
 @admin_bp.get('/users/get')
 @admin_required
 def get_all_users():
+    logger.info('admin get_user accessed')
     
     page= request.args.get('page', default= 1, type= int)
     content_per_page= request.args.get('content_per_page', default= 10, type= int)
@@ -72,7 +76,8 @@ def get_all_users():
 @admin_bp.get('/users/<int:user_id>')
 @admin_required
 def get_user_by_id(user_id):
-    
+    logger.info('admin get_user accessed')
+
     user= Users.query.get(user_id)
     if not user:
         return jsonify({"msg":"user not found"}), 404
@@ -188,7 +193,7 @@ def update_category(category_id):
     
     category= Categories.query.get(category_id)
     if not category:
-        return jsonify({"msg": f"Category with id '{id}' not found"}), 404
+        return jsonify({"msg": "Category not found"}), 404
     
     data= request.json
     name= data.get("name", category.name).strip().lower()
@@ -206,7 +211,7 @@ def delete_category(category_id):
     
     category= Categories.query.get(category_id)
     if not category:
-        return jsonify({"msg": f"Category with id '{id}' not found"}), 404
+        return jsonify({"msg": f"Category not found"}), 404
     
     if Products.query.filter_by(category_id= category.id).first():
         return jsonify({"msg":"category still has products"}), 403
@@ -216,10 +221,11 @@ def delete_category(category_id):
     return jsonify({"msg": "Deleted successfully"}), 200
      
 
-#done
 @admin_bp.post('/products/add')
 @admin_or_vendor_required
 def add_products():
+    
+    logger.info('add product route accessed')
     
     try:
         
@@ -286,7 +292,6 @@ def get_all_products():
     }), 200
      
         
-#done
 @admin_bp.put('/products/update/<int:product_id>')
 @admin_or_vendor_required
 def update_product(product_id):
@@ -343,38 +348,38 @@ def delete_product(product_id):
     return jsonify({"msg":"Deleted successfully"}), 200
 
 
-#done
 @admin_bp.patch('orders/status/<int:order_id>')
 @admin_required
 def update_order_status(order_id):
-    
+    logger.info('order status route accessed')
+
     data= request.json
     status= data.get("status", "").lower().strip()
     
     order= Orders.query.get(order_id)
-    if order:
+    if not order:
+        return jsonify({ "msg": "Order not found"}), 404
         
-        if status == 'shipped':
-            order.status = status
-            order.time_sent= datetime.utcnow()
-            
-        elif status == 'received':
-            order.status= status
-            order.time_received= datetime.utcnow()
-            
-        else:
-            return jsonify({"msg":"Invalid status remark"}), 400
-    
-        db.session.commit()
-        return jsonify({"msg":"status updated"}), 200
-    
-    return jsonify({ "msg": "Order not found"}), 404
+    if status == 'shipped':
+        order.status = status
+        order.time_sent= datetime.utcnow()
+        
+    elif status == 'received':
+        order.status= status
+        order.time_received= datetime.utcnow()
+        
+    else:
+        return jsonify({"msg":"Invalid status remark"}), 400
+
+    db.session.commit()
+    return jsonify({"msg":"status updated"}), 200
 
 
 @admin_bp.post('/users/role/<int:user_id>')
 @admin_required
 def update_user_role(user_id):
-    
+    logger.info('Updating role route accessed')
+
     user= Users.query.get(user_id)
     if not user:
         return jsonify({ "msg": f"User with {id} not found"}), 404
@@ -387,6 +392,7 @@ def update_user_role(user_id):
 @admin_bp.post('/users/suspend/<int:user_id>')
 @admin_required
 def suspend_user(user_id):
+    logger.info('Suspending route accessed')
     
     user= Users.query.get(user_id)
     if not user:
