@@ -15,7 +15,7 @@ class Users(db.Model, UserMixin):
     email_verified= db.Column(db.Boolean, nullable=False, default= False)
     status= db.Column(db.String(50), nullable=False, default= 'active')
     role= db.Column(db.String(50),nullable= False,  default= 'user')
-    password_otp= db.Column(db.Integer, timedelta(minutes= 10))
+    # password_otp= db.Column(db.Integer, timedelta(minutes= 10))
     created_at= db.Column(db.DateTime, default= datetime.utcnow)
     
     # relationships

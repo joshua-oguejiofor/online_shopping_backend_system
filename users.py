@@ -6,7 +6,7 @@ from uuid import uuid4
 from extension import db
 from logger import logger
 from flask import request, jsonify, Blueprint
-from flask_jwt_extended import current_user, jwt_required, get_jwt_identity
+from flask_jwt_extended import current_user, jwt_required, get_jwt_identity, get_jwt
 from models import (Profiles, Categories, Products, Orders, OrderItems, Carts, CartItems, Reviews)
 
 
@@ -395,7 +395,14 @@ def create_order():
                 )
                 db.session.add(order_items)
                 
-            product.stock -= quantity  
+            product.stock -= quantity 
+            
+            user_id= get_jwt() 
+            
+            cart= Carts.query.filter_by(user_id= user_id).first()
+            db.session.delete(cart)
+            db.session.commit()
+            
         return jsonify({"msg":"Order added"}), 201
     except Exception:
         logger.error("Error occured", exc_info=True)

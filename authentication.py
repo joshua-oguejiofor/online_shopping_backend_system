@@ -1,7 +1,7 @@
 import random
 from extension import db
 from logger import logger
-from models import Users, TokenBlockList, ForgetPassword
+from models import Users, TokenBlockList
 from extension import bcrypt
 from datetime import timedelta
 from flask_mail import Message
