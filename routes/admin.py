@@ -1,11 +1,9 @@
 from extension import db
 from logger import logger
-from flask import jsonify
-from functools import wraps
 from datetime import datetime
+from utility import admin_or_vendor_required, admin_required
 from flask import Blueprint, request, jsonify
 from models import Categories, Products, Orders, Users, OrderItems
-from flask_jwt_extended import get_jwt, verify_jwt_in_request
 
 
 admin_bp= Blueprint('admin',__name__)
@@ -13,38 +11,8 @@ admin_bp= Blueprint('admin',__name__)
 logger.info('Admin application accessed')
 
 
-def admin_required(fn):
-        @wraps(fn)
-        def wrapper(*args, **kargs):
-            
-            verify_jwt_in_request()
-            
-            claims= get_jwt()
-
-            if claims.get('role') != 'admin':
-                return jsonify({"msg": "Only admin can access"}), 401
-            return fn(*args, **kargs)
-        return wrapper
 
 
-def admin_or_vendor_required(fn):
-    @wraps(fn)
-    def wrapper(*args, **kwargs):
-        
-        verify_jwt_in_request()
-        
-        role= get_jwt()
-        
-        if role.get('role') not in ['vendor', 'admin']:
-            return jsonify({"msg":"Cannot access if not a vendor or an admin"}), 401
-        
-        if role.get("status")== "suspended":
-            return jsonify({"msg":"Account has been suspended"}), 401
-        
-        return fn(*args, **kwargs)
-    return wrapper
-   
-   
 @admin_bp.get('/users/get')
 @admin_required
 def get_all_users():

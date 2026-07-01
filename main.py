@@ -2,15 +2,12 @@
 import os
 from logger import logger
 from dotenv import load_dotenv
-from logging.handlers import RotatingFileHandler
 from flask_migrate import Migrate
 from flask import Flask, jsonify
-from users import user_bp
-from admin import admin_bp
+from routes import user, payment, admin, product, cart, order, auth, review
 from datetime import timedelta
-from authentication import auth_bp
 from models import Users, TokenBlockList
-from extension import db, mail, bcrypt, jwt
+from extension import db, mail, bcrypt, jwt 
 
 
 
@@ -33,8 +30,8 @@ def create_app():
     app.config['MIAL_PASSWORD']= os.getenv('MAIL_PASSWORD')
     app.config['MAIL_DEFAULT_SENDER']= os.getenv('MAIL_DEFAULT_SENDER')
     #tokens life cycles
-    app.config['JWT_ACCESS_TOKEN_EXPIRES']= timedelta(days= 10)
-    app.config['JWT_REFRESH_TOKEN_EXPIRES']= timedelta(days= 30)
+    app.config['JWT_ACCESS_TOKEN_EXPIRES']= timedelta(minutes= 10)
+    app.config['JWT_REFRESH_TOKEN_EXPIRES']= timedelta(days= 7)
     #always keep secret keys hidden for safety
     app.config['SECRET_KEY']= os.getenv('SECRET_KEY')
     app.config['JWT_SECRET_KEY']= os.getenv('JWT_SECRET_KEY')
@@ -50,12 +47,18 @@ def create_app():
     
     migrate= Migrate(app, db)
     
-    app.register_blueprint(auth_bp, url_prefix= '/auth')
-    app.register_blueprint(user_bp, url_prefix= '/user')
-    app.register_blueprint(admin_bp, url_prefix= '/admin')
+    
+    app.register_blueprint(review.review_bp, url_prefix= '/reviews')
+    app.register_blueprint(auth.auth_bp, url_prefix= '/auth')
+    app.register_blueprint(cart.cart_bp, url_prefix= '/carts')
+    app.register_blueprint(order.order_bp, url_prefix= '/orders')
+    app.register_blueprint(user.user_bp, url_prefix= '/users')
+    app.register_blueprint(admin.admin_bp, url_prefix= '/admin')
+    app.register_blueprint(payment.payment_bp, url_prefix= '/payments')
+    app.register_blueprint(product.product_bp, url_prefix= '/products')
     
     
-    @app.errorhandler(Exception)
+    @app.errorhandler(Exception) 
     def handle_exception(error):
         app.logger.error(f"Unhandled Exception {error}")
         return jsonify({"msg":"An unexpected error occured"}), 500
@@ -63,13 +66,11 @@ def create_app():
     @jwt.user_lookup_loader
     def user_lookup_callback(_jwt_header, jwt_data):
         identity= int(jwt_data['sub'])
-        # return Users.query.get(identity)
         return db.session.get(Users, identity)
     
 
     @jwt.additional_claims_loader
     def user_additional_claims_callback(user_id):
-        # user= Users.query.get(user_id)
         user= db.session.get(Users, user_id )
         return {"role": user.role, "status":user.status}
     
